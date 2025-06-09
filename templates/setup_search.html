@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup Search{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1>Setup Search</h1>
+  
+  <!-- Instruction / Info -->
+  <p>Select a tag to filter the setups.</p>
+  
+  <!-- Tag Grid -->
+  <div id="tagList" class="mb-3">
+    <!-- Tags will be dynamically inserted here in rows -->
+  </div>
+</div>
+
+<script>
+  async function loadTags() {
+    try {
+      const res = await fetch('/api/tags');
+      if (!res.ok) {
+        throw new Error("Failed to fetch tags.");
+      }
+
+      const tags = await res.json();
+      const tagListDiv = document.getElementById('tagList');
+      tagListDiv.innerHTML = "";
+
+      let currentRow;
+
+      tags.forEach((tag, index) => {
+        if (index % 3 === 0) {
+          currentRow = document.createElement('div');
+          currentRow.className = "row mb-3";
+          tagListDiv.appendChild(currentRow);
+        }
+
+        const col = document.createElement('div');
+        col.className = "col-md-4";
+
+        const tagLink = document.createElement('a');
+        tagLink.href = `/setup-search-results?tag_id=${tag.id}`;
+        tagLink.className = "d-block border p-3 rounded text-decoration-none bg-white shadow-sm text-dark text-center fw-bold";
+        tagLink.innerText = tag.name;
+
+        col.appendChild(tagLink);
+        currentRow.appendChild(col);
+      });
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('tagList').innerText = "Error loading tags.";
+    }
+  }
+
+  // Load the tags on page load
+  window.onload = loadTags;
+</script>
+{% endblock %}

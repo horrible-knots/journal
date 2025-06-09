@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup Entry{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1>Setup Entry</h1>
+
+	<!-- Setup Record Navigation -->
+	<div class="row mb-4">
+	  <div class="col">
+		<div class="card shadow-sm border-0">
+		  <div class="card-body">
+			<h5 class="card-title">Setup Record Navigation</h5>
+			<div class="d-flex flex-wrap mb-2">
+			  <button id="setupRecordFirstBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">First</button>
+			  <button id="setupRecordPrevBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Prev</button>
+			  <button id="setupRecordNextBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Next</button>
+			  <button id="setupRecordLastBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Last</button>
+			  <button id="setupRecordNewBtn" class="btn btn-success btn-sm me-2 mb-2">New</button>
+			  <button id="setupRecordDeleteBtn" class="btn btn-danger btn-sm mb-2">Delete</button>
+			</div>
+			<span id="setupRecordInfo" class="text-muted">Setup 0 of 0</span>
+		  </div>
+		</div>
+	  </div>
+	</div>
+
+	<!-- Image Pane and Image Navigation -->
+	<div class="row mb-4">
+	  <div class="col">
+		<div class="card shadow-sm">
+		  <div class="card-body">
+			<h5 class="card-title">Image Navigation</h5>
+			<div class="d-flex flex-wrap mb-3">
+			  <button id="setupFirstBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">First</button>
+			  <button id="setupPrevBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Prev</button>
+			  <button id="setupNextBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Next</button>
+			  <button id="setupLastBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Last</button>
+			  <button id="setupNewBtn" class="btn btn-success btn-sm me-2 mb-2">New</button>
+			  <button id="setupDeleteBtn" class="btn btn-danger btn-sm mb-2">Delete</button>
+			</div>
+			<div id="setupPane" class="border rounded p-4 bg-light text-center mb-2" tabindex="0" style="min-height: 200px;">
+			  Click here then Ctrl+V to paste an image
+			</div>
+			<span id="setupImageInfo" class="text-muted">Image 0 of 0</span>
+		  </div>
+		</div>
+	  </div>
+	</div>
+
+
+  <!-- Comments Textarea -->
+  <div class="row mb-3">
+    <div class="col">
+      <label for="setupComment" class="form-label">Comments</label>
+      <textarea id="setupComment" class="form-control" rows="3" placeholder="Enter setup comments"></textarea>
+    </div>
+  </div>
+
+  <!-- Tag Selection -->
+  <div class="row mb-3">
+    <div class="col">
+      <h5>Select Tags</h5>
+      <div id="tagContainer" class="row">
+        <!-- Dynamically populated checkboxes appear here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Button -->
+  <div class="row">
+    <div class="col">
+      <button id="setupRecordSaveBtn" class="btn btn-primary">Save Setup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================================
+  // Setup Record Navigation Variables
+  // ================================
+  let setups = [];              // Array to store all setup records (fetched from /api/setups)
+  let currentSetupIndex = -1;   // Index of the current setup record in the setups array
+  let currentSetupId = null;    // The id of the current setup record
+
+  // Variables for image handling within a setup record:
+  let setupImages = [];         // Array of image objects for the current setup, each { id: ... }
+  let setupImageIndex = 0;      // Current image index for the setup record
+
+  // Variables for tag selection:
+  let selectedTagIds = [];      // Array of tag IDs selected for the current setup
+
+  // ===============================
+  // Functions for Setup Record CRUD
+  // ===============================
+
+  // Load all setup records from the server
+  async function loadAllSetups() {
+    const res = await fetch('/api/setups');
+    setups = await res.json();
+  }
+
+  // Display a given setup record (populates comment, tag selection, images)
+  function displaySetupRecord(index) {
+    if (index < 0 || index >= setups.length) return;
+    const s = setups[index];
+    currentSetupId = s.id;
+    document.getElementById('setupComment').value = s.comment;
+    selectedTagIds = s.tag_ids || [];
+    // Update tag checkboxes to reflect the current record's tags
+    updateTagCheckboxes();
+    // Load images for the record:
+    setupImages = s.image_ids.map(id => ({ id }));
+    if (setupImageIndex >= setupImages.length) setupImageIndex = 0;
+    displaySetupImage(setupImageIndex);
+    // Update the record info (e.g., "Record 1 of 3")
+    document.getElementById('setupRecordInfo').innerText = `Record ${index + 1} of ${setups.length}`;
+  }
+
+  // Navigate to a setup record at a given index
+  async function goToSetupRecord(index) {
+    if (index < 0 || index >= setups.length) return;
+    currentSetupIndex = index;
+    displaySetupRecord(index);
+  }
+
+	window.onload = async () => {
+		const params = getQueryParams();
+		if (params.id) {
+		  await loadAllSetups();
+		  let idx = setups.findIndex(s => s.id == params.id);
+		  if (idx >= 0) {
+			currentSetupIndex = idx;
+			displaySetupRecord(idx);
+		  } else {
+			console.error("Setup with id " + params.id + " not found.");
+		  }
+		}
+		await loadTags();
+	};
+
+  // Create a new setup record
+  async function onNewSetup() {
+    let newSetupData = { comment: "", tag_ids: [] };
+    const res = await fetch('/api/setups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSetupData)
+    });
+    const data = await res.json();
+    await loadAllSetups();
+    let idx = setups.findIndex(s => s.id === data.id);
+    if (idx >= 0) {
+      currentSetupIndex = idx;
+      displaySetupRecord(idx);
+    }
+  }
+
+  // Delete the current setup record
+  async function onDeleteSetup() {
+    if (!currentSetupId) return;
+    if (!confirm("Are you sure you want to delete this setup?")) return;
+    await fetch('/api/setups/' + currentSetupId, { method: 'DELETE' });
+    await loadAllSetups();
+    if (setups.length > 0) {
+      currentSetupIndex = Math.min(currentSetupIndex, setups.length - 1);
+      displaySetupRecord(currentSetupIndex);
+    } else {
+      currentSetupId = null;
+      document.getElementById('setupComment').value = "";
+      setupImages = [];
+      displaySetupImage(0);
+      document.getElementById('setupRecordInfo').innerText = "Record 0 of 0";
+    }
+  }
+
+  // Save the current setup record (along with its tag selections)
+  async function saveSetupRecord(auto = false) {
+    const comment = document.getElementById('setupComment').value;
+    const setupData = { comment: comment, tag_ids: selectedTagIds };
+    let res;
+    if (!currentSetupId) {
+      res = await fetch('/api/setups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(setupData)
+      });
+      const data = await res.json();
+      currentSetupId = data.id;
+    } else {
+      res = await fetch('/api/setups/' + currentSetupId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(setupData)
+      });
+    }
+    await loadAllSetups();
+    let idx = setups.findIndex(s => s.id === currentSetupId);
+    if (idx >= 0) {
+      currentSetupIndex = idx;
+      displaySetupRecord(idx);
+    }
+    if (!auto) alert("Setup saved!");
+  }
+
+  // =============================
+  // Image Navigation for Setups
+  // =============================
+
+  function displaySetupImage(index) {
+    const pane = document.getElementById('setupPane');
+    pane.innerHTML = "";
+    if (setupImages.length === 0) {
+      pane.innerHTML = "Click here then Ctrl+V to paste an image";
+      document.getElementById('setupImageInfo').innerText = "Image 0 of 0";
+    } else {
+      const imgObj = setupImages[index];
+      const imgElem = document.createElement("img");
+      imgElem.src = `/api/setup_images/${imgObj.id}`;
+      pane.appendChild(imgElem);
+      document.getElementById('setupImageInfo').innerText = `Image ${index + 1} of ${setupImages.length}`;
+    }
+  }
+
+  async function refreshSetupImages() {
+    if (!currentSetupId) return;
+    const res = await fetch('/api/setups/' + currentSetupId);
+    const data = await res.json();
+    setupImages = data.image_ids.map(id => ({ id }));
+    if (setupImageIndex >= setupImages.length) setupImageIndex = 0;
+    displaySetupImage(setupImageIndex);
+  }
+
+  // Image navigation event handlers for the setup image pane:
+  document.getElementById('setupFirstBtn').addEventListener('click', () => {
+    if (setupImages.length > 0) {
+      setupImageIndex = 0;
+      displaySetupImage(setupImageIndex);
+    }
+  });
+  document.getElementById('setupPrevBtn').addEventListener('click', () => {
+    if (setupImages.length > 0) {
+      setupImageIndex = Math.max(0, setupImageIndex - 1);
+      displaySetupImage(setupImageIndex);
+    }
+  });
+  document.getElementById('setupNextBtn').addEventListener('click', () => {
+    if (setupImages.length > 0) {
+      setupImageIndex = Math.min(setupImages.length - 1, setupImageIndex + 1);
+      displaySetupImage(setupImageIndex);
+    }
+  });
+  document.getElementById('setupLastBtn').addEventListener('click', () => {
+    if (setupImages.length > 0) {
+      setupImageIndex = setupImages.length - 1;
+      displaySetupImage(setupImageIndex);
+    }
+  });
+  document.getElementById('setupNewBtn').addEventListener('click', () => {
+    setupImageIndex = setupImages.length;
+    alert("Please paste an image for the setup.");
+  });
+  document.getElementById('setupDeleteBtn').addEventListener('click', async () => {
+    if (setupImages.length > 0) {
+      if (!confirm("Are you sure you want to delete this image?")) return;
+      const currentImage = setupImages[setupImageIndex];
+      await fetch(`/api/setup_images/${currentImage.id}`, { method: 'DELETE' });
+      await refreshSetupImages();
+    }
+  });
+
+  // =======================
+  // Paste Event for Setups
+  // =======================
+  document.getElementById('setupPane').addEventListener('click', () => {
+    document.getElementById('setupPane').classList.add('selected');
+    document.getElementById('setupPane').focus();
+    // If there's no current record, auto-save a new one.
+    if (!currentSetupId) {
+      saveSetupRecord(true);
+    }
+  });
+
+  document.addEventListener('paste', async (evt) => {
+    if (document.activeElement.id !== 'setupPane') return;
+    if (!currentSetupId) await saveSetupRecord(true);
+    const items = evt.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const blob = item.getAsFile();
+        if (blob) {
+          await uploadSetupImage(blob, currentSetupId);
+          await refreshSetupImages();
+        }
+      }
+    }
+  });
+
+  async function uploadSetupImage(blob, setupId) {
+    const formData = new FormData();
+    formData.append('setup_id', setupId);
+    formData.append('file', blob);
+    await fetch('/api/setup_images', {
+      method: 'POST',
+      body: formData
+    });
+  }
+
+  // ======================
+  // Tag Selection Handling
+  // ======================
+async function loadTags() {
+  const res = await fetch('/api/tags');
+  const tags = await res.json();
+  const container = document.getElementById('tagContainer');
+  container.innerHTML = "";
+  tags.forEach(tag => {
+    const col = document.createElement('div');
+    col.className = "col-md-4";
+
+    const div = document.createElement('div');
+    div.className = "form-check";
+
+    const checkbox = document.createElement('input');
+    checkbox.type = "checkbox";
+    checkbox.id = "tag_" + tag.id;
+    checkbox.className = "form-check-input";
+    checkbox.value = tag.id;
+    if (selectedTagIds.includes(tag.id)) {
+      checkbox.checked = true;
+    }
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!selectedTagIds.includes(tag.id)) {
+          selectedTagIds.push(tag.id);
+        }
+      } else {
+        selectedTagIds = selectedTagIds.filter(id => id !== tag.id);
+      }
+    });
+
+    const label = document.createElement('label');
+    label.className = "form-check-label";
+    label.htmlFor = "tag_" + tag.id;
+    label.innerText = tag.name;
+
+    div.appendChild(checkbox);
+    div.appendChild(label);
+    col.appendChild(div);
+    container.appendChild(col);
+  });
+}
+
+
+  function updateTagCheckboxes() {
+    const container = document.getElementById('tagContainer');
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      const tagId = parseInt(checkbox.value);
+      checkbox.checked = selectedTagIds.includes(tagId);
+    });
+  }
+
+  // ============================
+  // Setup Record Navigation Buttons
+  // ============================
+  document.getElementById('setupRecordFirstBtn').addEventListener('click', async () => {
+    await loadAllSetups();
+    if (setups.length > 0) {
+      currentSetupIndex = 0;
+      displaySetupRecord(currentSetupIndex);
+    }
+  });
+  document.getElementById('setupRecordPrevBtn').addEventListener('click', () => {
+    if (setups.length > 0 && currentSetupIndex > 0) {
+      currentSetupIndex = currentSetupIndex - 1;
+      displaySetupRecord(currentSetupIndex);
+    }
+  });
+  document.getElementById('setupRecordNextBtn').addEventListener('click', () => {
+    if (setups.length > 0 && currentSetupIndex < setups.length - 1) {
+      currentSetupIndex = currentSetupIndex + 1;
+      displaySetupRecord(currentSetupIndex);
+    }
+  });
+  document.getElementById('setupRecordLastBtn').addEventListener('click', async () => {
+    await loadAllSetups();
+    if (setups.length > 0) {
+      currentSetupIndex = setups.length - 1;
+      displaySetupRecord(currentSetupIndex);
+    }
+  });
+  document.getElementById('setupRecordNewBtn').addEventListener('click', onNewSetup);
+  document.getElementById('setupRecordDeleteBtn').addEventListener('click', onDeleteSetup);
+  document.getElementById('setupRecordSaveBtn').addEventListener('click', () => saveSetupRecord());
+
+  // ====================
+  // Initialization
+  // ====================
+  (async function init() {
+    await loadAllSetups();
+    if (setups.length > 0) {
+      currentSetupIndex = 0;
+      displaySetupRecord(currentSetupIndex);
+    }
+    await loadTags();
+  })();
+  
+  function getQueryParams() {
+	  const params = {};
+	  window.location.search.substring(1).split("&").forEach(pair => {
+		if (pair) {
+		  const parts = pair.split("=");
+		  params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || "");
+		}
+	  });
+	  return params;
+	}
+
+</script>
+
+{% endblock %}

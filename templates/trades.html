@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+
+{% block title %}Trade Journal{% endblock %}
+
+{% block content %}
+
+<meta charset="UTF-8" />
+<title>Trading Journal</title>
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+rel="stylesheet"
+/>
+
+
+
+<div class="container my-4">
+	<h1 class="mb-4">Trading Journal</h1>
+		<div class="row">
+		  <!-- Vertical nav: smaller & auto-width -->
+		  <div class="col-auto">
+			<div class="card shadow-sm section-card mb-4" style="width: 160px;">
+			  <div class="card-body d-flex flex-column align-items-start">
+				<button id="firstBtn" class="btn btn-outline-secondary btn-sm mb-2 w-100">First</button>
+				<button id="prevBtn" class="btn btn-outline-secondary btn-sm mb-2 w-100">Prev</button>
+				<button id="nextBtn" class="btn btn-outline-secondary btn-sm mb-2 w-100">Next</button>
+				<button id="lastBtn" class="btn btn-outline-secondary btn-sm mb-2 w-100">Last</button>
+
+				<hr class="w-100">
+
+				<span id="recordInfo" class="text-muted mb-2">Record 0 of 0</span>
+
+				<button id="newBtn" class="btn btn-success btn-sm mb-2 w-100">New</button>
+				<button id="deleteBtn" class="btn btn-danger btn-sm mb-2 w-100">Delete</button>
+				<button id="saveBtn" class="btn btn-primary btn-sm w-100">Save</button>
+			  </div>
+			</div>
+		  </div>
+
+		  <!-- Right-side content (form, charts, journal, etc.) -->
+		  <div class="col-md-10">
+			<!-- Your other components like journal form, charts, inputs go here -->
+			<!-- Top row: Symbol, Entry Date, Exit Date -->
+			<div class="card shadow-sm section-card mb-4">
+			  <div class="card-body">
+				<div class="row g-3 align-items-center">
+				  <div class="col-md-auto">
+					<label for="symbol" class="form-label mb-0">Symbol</label>
+					<input type="text" id="symbol" class="form-control form-control-sm" />
+				  </div>
+				  <div class="col-md-auto">
+					<label for="entryDate" class="form-label mb-0">Entry Date</label>
+					<input type="date" id="entryDate" class="form-control form-control-sm" />
+				  </div>
+				  <div class="col-md-auto">
+					<label for="exitDate" class="form-label mb-0">Exit Date</label>
+					<input type="date" id="exitDate" class="form-control form-control-sm" />
+				  </div>
+				</div>
+			  </div>
+			</div>
+			<!-- Two-Column Image Pane Layout with Controls -->
+			<div class="row mb-4">
+			  <div class="col-md-6">
+				<div class="card shadow-sm">
+				  <div class="card-body">
+					<h5 class="card-title">Before Trade</h5>
+					<div class="d-flex flex-wrap mb-2">
+					  <button id="pane1FirstBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">First</button>
+					  <button id="pane1PrevBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Prev</button>
+					  <button id="pane1NextBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Next</button>
+					  <button id="pane1LastBtn" class="btn btn-outline-secondary btn-sm mb-2">Last</button>
+					</div>
+					<div class="mb-2 text-muted" id="pane1RecordInfo">Image 0 of 0</div>
+					<div class="mb-2">
+					  <button id="pane1NewBtn" class="btn btn-success btn-sm me-2">New</button>
+					  <button id="pane1DeleteBtn" class="btn btn-danger btn-sm">Delete</button>
+					</div>
+					<div id="pane1" class="pane" tabindex="0">Click here, then Ctrl+V to paste an image</div>
+				  </div>
+				</div>
+			  </div>
+
+			  <div class="col-md-6">
+				<div class="card shadow-sm">
+				  <div class="card-body">
+					<h5 class="card-title">After Trade</h5>
+					<div class="d-flex flex-wrap mb-2">
+					  <button id="pane2FirstBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">First</button>
+					  <button id="pane2PrevBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Prev</button>
+					  <button id="pane2NextBtn" class="btn btn-outline-secondary btn-sm me-2 mb-2">Next</button>
+					  <button id="pane2LastBtn" class="btn btn-outline-secondary btn-sm mb-2">Last</button>
+					</div>
+					<div class="mb-2 text-muted" id="pane2RecordInfo">Image 0 of 0</div>
+					<div class="mb-2">
+					  <button id="pane2NewBtn" class="btn btn-success btn-sm me-2">New</button>
+					  <button id="pane2DeleteBtn" class="btn btn-danger btn-sm">Delete</button>
+					</div>
+					<div id="pane2" class="pane" tabindex="0">Click here, then Ctrl+V to paste an image</div>
+				  </div>
+				</div>
+			  </div>
+			</div>
+
+		<!-- Questions Section -->
+		<div class="row mb-4">
+		  <!-- Left Column: Pre-Trade -->
+		  <div class="col-md-6">
+			<div class="card shadow-sm">
+			  <div class="card-body">
+				<h5 class="card-title">Before Trade</h5>
+
+				<div class="mb-3">
+				  <label for="left1" class="form-label">Setup Type & Trade Management Plan</label>
+				  <textarea id="left1" class="form-control" rows="2" placeholder="e.g. Liquidity sweep + break of structure, targeting 2R to previous high, partial TP at 1.5R"></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="left2" class="form-label">What is the cause/justification for this trade?</label>
+				  <textarea id="left2" class="form-control" rows="2" placeholder="e.g. Stop hunt below Asian low, displacement confirmed by impulse candle, entering on retest."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="left3" class="form-label">Where is the invalidation? (Why would this setup be wrong?)</label>
+				  <textarea id="left3" class="form-control" rows="2" placeholder="e.g. Close above previous swing high would invalidate my bearish bias."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="left4" class="form-label">What emotions am I feeling entering this trade?</label>
+				  <textarea id="left4" class="form-control" rows="2" placeholder="Confident / Hesitant / Rushed / FOMO / Revenge / Calm / Indecisive"></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="left5" class="form-label">What will I do <b>if</b> this trade goes into drawdown?</label>
+				  <textarea id="left5" class="form-control" rows="2" placeholder="Let the stop loss handle it. No moving it. Reassess only if structure changes."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="left6" class="form-label">What will I do <b>if</b> this trade goes into profit?</label>
+				  <textarea id="left6" class="form-control" rows="2" placeholder="Hold to target. Don’t move to BE early. Scale partial if we hit 1.5R cleanly."></textarea>
+				</div>
+
+			  </div>
+			</div>
+		  </div>
+
+		  <!-- Right Column: Post-Trade -->
+		  <div class="col-md-6">
+			<div class="card shadow-sm">
+			  <div class="card-body">
+				<h5 class="card-title">After Trade</h5>
+
+				<div class="mb-3">
+				  <label for="right1" class="form-label">Did I follow the plan? Where did I deviate?</label>
+				  <textarea id="right1" class="form-control" rows="2" placeholder="e.g. Moved stop to BE too early. Closed early out of fear. Followed plan to the letter."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="right2" class="form-label">What was my emotional state during the trade?</label>
+				  <textarea id="right2" class="form-control" rows="2" placeholder="e.g. Anxious at first, calmed down after price moved. Nervous throughout. Stayed chill."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="right3" class="form-label">Did the setup actually play out as expected?</label>
+				  <textarea id="right3" class="form-control" rows="2" placeholder="Yes, price reversed as planned. No, impulse didn’t follow liquidity sweep."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="right4" class="form-label">Execution score (0–10)</label>
+				  <textarea id="right4" class="form-control" rows="2" placeholder="10 = Flawless execution. 0 = Total deviation from plan. Rate it honestly."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="right5" class="form-label">What did I learn from this trade?</label>
+				  <textarea id="right5" class="form-control" rows="2" placeholder="e.g. Don’t enter during Asia. Wait for confirmation. My emotional checklist helped me stay in."></textarea>
+				</div>
+				<div class="mb-3">
+				  <label for="right6" class="form-label">What will I do differently (or the same) next time?</label>
+				  <textarea id="right6" class="form-control" rows="2" placeholder="e.g. Stick with plan. Adjust SL placement. Don’t skip journaling entry again."></textarea>
+				</div>
+
+			  </div>
+			</div>
+		  </div>
+		</div>
+		<!-- Bottom Question -->
+		<div class="card shadow-sm mb-5">
+		  <div class="card-body">
+			<label for="bottomQ" class="form-label">Bottom Question (spans both columns)</label>
+			<textarea id="bottomQ" class="form-control" rows="2" placeholder="Filler question text"></textarea>
+		  </div>
+		</div>
+	  </div>
+	</div>
+</div>
+
+
+  <!-- Bootstrap 5 JS (CDN) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+  </script>
+
+  <!-- Main script -->
+ <script>
+  let trades = [];               // List of all trades from the server.
+  let currentIndex = -1;         // Which trade are we showing.
+  let currentTradeId = null;     // The DB id of the current trade.
+  let hasUnsavedChanges = false; // Flag for unsaved changes.
+  let activePane = 1;            // Which pane (1 or 2) is active for image pasting.
+
+  // Global arrays and indices for images in each pane.
+  let pane1Images = [];
+  let pane2Images = [];
+  let pane1Index = 0;
+  let pane2Index = 0;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+	  await loadAllTrades();
+	  if (trades.length === 0) {
+		// auto‑create the very first trade so the pane has a valid ID
+		await onNewRecord();
+	  } else {
+		currentIndex = 0;
+		displayRecord(currentIndex);
+	  }
+	  setupEventHandlers();
+	  setupPasteHandler();
+  });
+
+  async function loadAllTrades() {
+    const res = await fetch('/api/trades');
+    trades = await res.json();
+  }
+
+  function setupEventHandlers() {
+    // Main record navigation
+    document.getElementById('firstBtn').addEventListener('click', () => goToRecord(0));
+    document.getElementById('prevBtn').addEventListener('click', () => goToRecord(currentIndex - 1));
+    document.getElementById('nextBtn').addEventListener('click', () => goToRecord(currentIndex + 1));
+    document.getElementById('lastBtn').addEventListener('click', () => goToRecord(trades.length - 1));
+    document.getElementById('newBtn').addEventListener('click', onNewRecord);
+    document.getElementById('deleteBtn').addEventListener('click', onDeleteRecord);
+    document.getElementById('saveBtn').addEventListener('click', () => saveCurrentRecord(true));
+
+    // Image pane navigation for Pane 1
+    document.getElementById('pane1FirstBtn').addEventListener('click', () => {
+      if (pane1Images.length > 0) {
+        pane1Index = 0;
+        displayImage(1, pane1Index);
+      }
+    });
+    document.getElementById('pane1PrevBtn').addEventListener('click', () => {
+      if (pane1Images.length > 0) {
+        pane1Index = Math.max(0, pane1Index - 1);
+        displayImage(1, pane1Index);
+      }
+    });
+    document.getElementById('pane1NextBtn').addEventListener('click', () => {
+      if (pane1Images.length > 0) {
+        pane1Index = Math.min(pane1Images.length - 1, pane1Index + 1);
+        displayImage(1, pane1Index);
+      }
+    });
+    document.getElementById('pane1LastBtn').addEventListener('click', () => {
+      if (pane1Images.length > 0) {
+        pane1Index = pane1Images.length - 1;
+        displayImage(1, pane1Index);
+      }
+    });
+    document.getElementById('pane1NewBtn').addEventListener('click', () => {
+      // For a new image, adjust the index so that after a paste it appears as the latest.
+      pane1Index = pane1Images.length;
+      alert("Please paste an image for Pane 1.");
+    });
+    document.getElementById('pane1DeleteBtn').addEventListener('click', async () => {
+      if (pane1Images.length > 0) {
+	    if (!confirm('Are you sure you want to delete this image?')) return;
+        const currentImage = pane1Images[pane1Index];
+        await fetch(`/api/images/${currentImage.id}`, { method: 'DELETE' });
+        await refreshPaneImages(currentTradeId, 1);
+      }
+    });
+
+    // Image pane navigation for Pane 2
+    document.getElementById('pane2FirstBtn').addEventListener('click', () => {
+      if (pane2Images.length > 0) {
+        pane2Index = 0;
+        displayImage(2, pane2Index);
+      }
+    });
+    document.getElementById('pane2PrevBtn').addEventListener('click', () => {
+      if (pane2Images.length > 0) {
+        pane2Index = Math.max(0, pane2Index - 1);
+        displayImage(2, pane2Index);
+      }
+    });
+    document.getElementById('pane2NextBtn').addEventListener('click', () => {
+      if (pane2Images.length > 0) {
+        pane2Index = Math.min(pane2Images.length - 1, pane2Index + 1);
+        displayImage(2, pane2Index);
+      }
+    });
+    document.getElementById('pane2LastBtn').addEventListener('click', () => {
+      if (pane2Images.length > 0) {
+        pane2Index = pane2Images.length - 1;
+        displayImage(2, pane2Index);
+      }
+    });
+    document.getElementById('pane2NewBtn').addEventListener('click', () => {
+      pane2Index = pane2Images.length;
+      alert("Please paste an image for Pane 2.");
+    });
+    document.getElementById('pane2DeleteBtn').addEventListener('click', async () => {
+      if (pane2Images.length > 0) {
+	    if (!confirm('Are you sure you want to delete this image?')) return;
+        const currentImage = pane2Images[pane2Index];
+        await fetch(`/api/images/${currentImage.id}`, { method: 'DELETE' });
+        await refreshPaneImages(currentTradeId, 2);
+      }
+    });
+
+    // Track changes in fields to set hasUnsavedChanges = true
+    const fields = [
+      'symbol','entryDate','exitDate','left1','left2','left3','left4','left5','left6',
+      'right1','right2','right3','right4','right5','right6','bottomQ'
+    ];
+    fields.forEach(f => {
+      document.getElementById(f).addEventListener('input', () => {
+        hasUnsavedChanges = true;
+      });
+    });
+
+    // Pane click to set activePane (for paste events)
+    document.getElementById('pane1').addEventListener('click', () => selectPane(1));
+    document.getElementById('pane2').addEventListener('click', () => selectPane(2));
+  }
+
+  function setupPasteHandler() {
+    document.addEventListener('paste', async (evt) => {
+      if (currentTradeId === null) return;
+      const items = evt.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        let item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          if (blob) {
+            await uploadImage(blob, currentTradeId, activePane);
+            await refreshPaneImages(currentTradeId, activePane);
+            hasUnsavedChanges = false;
+          }
+        }
+      }
+    });
+  }
+
+  function selectPane(num) {
+    activePane = num;
+    document.getElementById('pane1').classList.remove('selected');
+    document.getElementById('pane2').classList.remove('selected');
+    document.getElementById('pane' + num).classList.add('selected');
+  }
+
+  async function goToRecord(index) {
+    if (index < 0 || index >= trades.length) return;
+    if (hasUnsavedChanges && currentIndex >= 0) {
+      await saveCurrentRecord(false);
+    }
+    currentIndex = index;
+    displayRecord(currentIndex);
+  }
+
+  async function displayRecord(idx) {
+    if (idx < 0 || idx >= trades.length) return;
+    const t = trades[idx];
+    currentTradeId = t.id;
+    // Populate the form fields accordingly...
+    document.getElementById('symbol').value = t.symbol;
+    document.getElementById('entryDate').value = t.entry_date;
+    document.getElementById('exitDate').value = t.exit_date;
+    document.getElementById('left1').value = t.left1 || "";
+    document.getElementById('left2').value = t.left2 || "";
+    document.getElementById('left3').value = t.left3 || "";
+    document.getElementById('left4').value = t.left4 || "";
+    document.getElementById('left5').value = t.left5 || "";
+    document.getElementById('left6').value = t.left6 || "";
+    document.getElementById('right1').value = t.right1 || "";
+    document.getElementById('right2').value = t.right2 || "";
+    document.getElementById('right3').value = t.right3 || "";
+    document.getElementById('right4').value = t.right4 || "";
+    document.getElementById('right5').value = t.right5 || "";
+    document.getElementById('right6').value = t.right6 || "";
+    document.getElementById('bottomQ').value = t.bottomQ || "";
+    document.getElementById('recordInfo').innerText = `Record ${idx + 1} of ${trades.length}`;
+    hasUnsavedChanges = false;
+    // Refresh images for both panes.
+    await refreshPaneImages(t.id, 1);
+    await refreshPaneImages(t.id, 2);
+  }
+
+  async function refreshPaneImages(tradeId, paneNum) {
+    // Fetch trade data (including images) from the server.
+    const res = await fetch(`/api/trades/${tradeId}`);
+    const data = await res.json();
+    // Filter images for this pane.
+    const imagesForPane = data.images.filter(img => img.pane_number == paneNum);
+    if (paneNum === 1) {
+      pane1Images = imagesForPane;
+      if (pane1Index >= pane1Images.length) {
+        pane1Index = 0;
+      }
+      displayImage(1, pane1Index);
+    } else if (paneNum === 2) {
+      pane2Images = imagesForPane;
+      if (pane2Index >= pane2Images.length) {
+        pane2Index = 0;
+      }
+      displayImage(2, pane2Index);
+    }
+  }
+
+	function displayImage(paneNum, index) {
+	  const paneDiv = document.getElementById("pane" + paneNum);
+	  paneDiv.innerHTML = "";
+
+	  let imageArray = (paneNum === 1 ? pane1Images : pane2Images);
+	  if (imageArray.length === 0) {
+		paneDiv.innerHTML = "Click here, then Ctrl+V to paste an image";
+		document.getElementById(`pane${paneNum}RecordInfo`).innerText = "Image 0 of 0";
+	  } else {
+		const imgObj = imageArray[index];
+		const imgElem = document.createElement("img");
+
+		const imageUrl = `/api/images/${imgObj.id}`;
+		imgElem.src = imageUrl;
+		imgElem.classList.add("img-fluid", "zoomable-image");
+		imgElem.style.cursor = "zoom-in";
+		imgElem.setAttribute("data-fullres", imageUrl); // Full-resolution image path
+
+		imgElem.addEventListener("click", () => {
+		  const zoomedImage = document.getElementById("zoomedImage");
+		  zoomedImage.src = imgElem.getAttribute("data-fullres");
+		  const zoomModal = new bootstrap.Modal(document.getElementById("imageZoomModal"));
+		  zoomModal.show();
+		});
+
+		paneDiv.appendChild(imgElem);
+		document.getElementById(`pane${paneNum}RecordInfo`).innerText = `Image ${index + 1} of ${imageArray.length}`;
+	  }
+	}
+
+
+  async function onNewRecord() {
+    if (hasUnsavedChanges && currentIndex >= 0) {
+      await saveCurrentRecord(false);
+    }
+    let newTradeData = {
+      symbol: "",
+      entry_date: "",
+      exit_date: "",
+      left1: "", left2: "", left3: "", left4: "", left5: "", left6: "",
+      right1: "", right2: "", right3: "", right4: "", right5: "", right6: "",
+      bottomQ: ""
+    };
+    const res = await fetch('/api/trades', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTradeData)
+    });
+    const result = await res.json();
+    await loadAllTrades();
+    const idx = trades.findIndex(t => t.id === result.id);
+    if (idx >= 0) {
+      currentIndex = idx;
+      displayRecord(idx);
+    }
+  }
+
+  async function onDeleteRecord() {
+    if (currentTradeId === null) return;
+    if (!confirm('Are you sure you want to delete this record?')) return;
+    await fetch(`/api/trades/${currentTradeId}`, { method: 'DELETE' });
+    await loadAllTrades();
+    if (trades.length === 0) {
+      clearForm();
+      currentIndex = -1;
+      currentTradeId = null;
+      document.getElementById('recordInfo').innerText = "Record 0 of 0";
+    } else {
+      currentIndex = Math.min(currentIndex, trades.length - 1);
+      displayRecord(currentIndex);
+    }
+  }
+
+  function clearForm() {
+    const fields = [
+      'symbol','entryDate','exitDate','left1','left2','left3','left4','left5','left6',
+      'right1','right2','right3','right4','right5','right6','bottomQ'
+    ];
+    fields.forEach(f => {
+      document.getElementById(f).value = "";
+    });
+    document.getElementById('pane1').innerHTML = "Click here, then Ctrl+V to paste an image";
+    document.getElementById('pane2').innerHTML = "Click here, then Ctrl+V to paste an image";
+  }
+
+  async function saveCurrentRecord(forceMsg) {
+    if (currentTradeId === null) return;
+    const updatedData = {
+      symbol: document.getElementById('symbol').value,
+      entry_date: document.getElementById('entryDate').value,
+      exit_date: document.getElementById('exitDate').value,
+      left1: document.getElementById('left1').value,
+      left2: document.getElementById('left2').value,
+      left3: document.getElementById('left3').value,
+      left4: document.getElementById('left4').value,
+      left5: document.getElementById('left5').value,
+      left6: document.getElementById('left6').value,
+      right1: document.getElementById('right1').value,
+      right2: document.getElementById('right2').value,
+      right3: document.getElementById('right3').value,
+      right4: document.getElementById('right4').value,
+      right5: document.getElementById('right5').value,
+      right6: document.getElementById('right6').value,
+      bottomQ: document.getElementById('bottomQ').value
+    };
+    await fetch(`/api/trades/${currentTradeId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData)
+    });
+    trades[currentIndex] = { ...trades[currentIndex], ...updatedData };
+    hasUnsavedChanges = false;
+    if (forceMsg) alert("Record saved!");
+  }
+
+  async function uploadImage(blob, recordId, paneNumber) {
+    const formData = new FormData();
+    formData.append('record_id', recordId);
+    formData.append('pane_number', paneNumber);
+    formData.append('file', blob);
+    await fetch('/api/images', {
+      method: 'POST',
+      body: formData
+    });
+  }
+</script>
+
+
+{% endblock %}

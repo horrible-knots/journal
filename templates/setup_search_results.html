@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup Search Results{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1>Setup Search Results</h1>
+
+  <!-- Pagination controls at the top -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <button id="prevPageBtn" class="btn btn-outline-secondary btn-sm">Prev</button>
+    <span id="pageInfo"></span>
+    <button id="nextPageBtn" class="btn btn-outline-secondary btn-sm">Next</button>
+  </div>
+
+  <!-- Container where setup results are rendered -->
+  <div id="resultsContainer"></div>
+</div>
+
+<script>
+  // -------------------------------
+  // Utility: Parse query parameters.
+  // -------------------------------
+  function getQueryParams() {
+    const params = {};
+    window.location.search.substring(1).split("&").forEach(function (pair) {
+      if (!pair) return;
+      let parts = pair.split("=");
+      params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || "");
+    });
+    return params;
+  }
+
+  // -------------------------------
+  // Global variables for pagination.
+  // -------------------------------
+  let currentPage = 1;
+  let totalPages = 1;
+  let tagId = null;
+  const pageSize = 5; // Adjust as needed
+
+  // -------------------------------
+  // Fetch the paginated setups filtered by tag.
+  // -------------------------------
+  async function loadSetups() {
+    const params = getQueryParams();
+    tagId = params.tag_id;  // assume tag_id is passed in the URL query string.
+    currentPage = params.page ? parseInt(params.page) : 1;
+
+    // Call your paginated API for setups by tag.
+    // (Make sure your backend supports this endpoint.)
+    const res = await fetch(`/api/setups_by_tag?tag_id=${tagId}&page=${currentPage}&pageSize=${pageSize}`);
+    if (!res.ok) {
+      document.getElementById('resultsContainer').innerText = "Error loading setups.";
+      return;
+    }
+    const data = await res.json();
+    totalPages = data.total_pages;
+    updatePaginationInfo();
+    renderResults(data.setups);
+  }
+
+  // -------------------------------
+  // Update pagination info display and buttons.
+  // -------------------------------
+  function updatePaginationInfo() {
+    document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prevPageBtn').disabled = (currentPage <= 1);
+    document.getElementById('nextPageBtn').disabled = (currentPage >= totalPages);
+  }
+
+  document.getElementById('prevPageBtn').addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadSetups().then(() => updateURL());
+    }
+  });
+  document.getElementById('nextPageBtn').addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadSetups().then(() => updateURL());
+    }
+  });
+
+  // Update the URL query string (without reloading the page)
+  function updateURL() {
+    const newURL = new URL(window.location.href);
+    newURL.searchParams.set("page", currentPage);
+    window.history.pushState({}, '', newURL);
+  }
+
+  // -------------------------------
+  // Render each setup result.
+  // -------------------------------
+function renderResults(setups) {
+  const container = document.getElementById('resultsContainer');
+  container.innerHTML = ""; // clear existing results
+
+  let currentRow;
+
+  setups.forEach((setup, index) => {
+    // Start a new row every 3 items
+    if (index % 3 === 0) {
+      currentRow = document.createElement('div');
+      currentRow.className = "row mb-4";
+      container.appendChild(currentRow);
+    }
+
+    const col = document.createElement('div');
+    col.className = "col-md-4 p-2 border rounded";
+
+    // Image container
+    const imgContainer = document.createElement('div');
+    imgContainer.className = "mb-2";
+    imgContainer.setAttribute("data-image-index", "0");
+    imgContainer.setAttribute("data-image-ids", JSON.stringify(setup.image_ids || []));
+
+    function renderImage() {
+      const imageIds = JSON.parse(imgContainer.getAttribute("data-image-ids"));
+      let index = parseInt(imgContainer.getAttribute("data-image-index"));
+      imgContainer.innerHTML = "";
+      if (!imageIds || imageIds.length === 0) {
+        imgContainer.innerHTML = "<p>No image available</p>";
+      } else {
+        const imgElem = document.createElement('img');
+        imgElem.src = `/api/setup_images/${imageIds[index]}`;
+        imgElem.style.maxWidth = "100%";
+        imgContainer.appendChild(imgElem);
+
+        const info = document.createElement('p');
+        info.innerText = `Image ${index + 1} of ${imageIds.length}`;
+        info.className = "mt-2";
+        imgContainer.appendChild(info);
+      }
+    }
+    renderImage();
+
+    // Navigation buttons
+    const navDiv = document.createElement('div');
+    navDiv.className = "btn-group";
+
+    const btnFirst = document.createElement('button');
+    btnFirst.className = "btn btn-outline-secondary btn-sm";
+    btnFirst.innerText = "First";
+    btnFirst.addEventListener('click', () => {
+      imgContainer.setAttribute("data-image-index", "0");
+      renderImage();
+    });
+
+    const btnPrev = document.createElement('button');
+    btnPrev.className = "btn btn-outline-secondary btn-sm";
+    btnPrev.innerText = "Prev";
+    btnPrev.addEventListener('click', () => {
+      let index = parseInt(imgContainer.getAttribute("data-image-index"));
+      index = Math.max(0, index - 1);
+      imgContainer.setAttribute("data-image-index", index.toString());
+      renderImage();
+    });
+
+    const btnNext = document.createElement('button');
+    btnNext.className = "btn btn-outline-secondary btn-sm";
+    btnNext.innerText = "Next";
+    btnNext.addEventListener('click', () => {
+      const imageIds = JSON.parse(imgContainer.getAttribute("data-image-ids"));
+      let index = parseInt(imgContainer.getAttribute("data-image-index"));
+      index = Math.min(imageIds.length - 1, index + 1);
+      imgContainer.setAttribute("data-image-index", index.toString());
+      renderImage();
+    });
+
+    const btnLast = document.createElement('button');
+    btnLast.className = "btn btn-outline-secondary btn-sm";
+    btnLast.innerText = "Last";
+    btnLast.addEventListener('click', () => {
+      const imageIds = JSON.parse(imgContainer.getAttribute("data-image-ids"));
+      imgContainer.setAttribute("data-image-index", (imageIds.length - 1).toString());
+      renderImage();
+    });
+
+    /*const btnNew = document.createElement('button');
+    btnNew.className = "btn btn-success btn-sm";
+    btnNew.innerText = "New";
+    btnNew.addEventListener('click', () => {
+      alert("To add a new image, click the image pane and paste an image.");
+    });
+
+    const btnDelete = document.createElement('button');
+    btnDelete.className = "btn btn-danger btn-sm";
+    btnDelete.innerText = "Delete";
+    btnDelete.addEventListener('click', async () => {
+      const imageIds = JSON.parse(imgContainer.getAttribute("data-image-ids"));
+      let index = parseInt(imgContainer.getAttribute("data-image-index"));
+      if (imageIds.length === 0) return;
+      await fetch(`/api/setup_images/${imageIds[index]}`, { method: 'DELETE' });
+      const newIds = imageIds.filter((id, i) => i !== index);
+      imgContainer.setAttribute("data-image-ids", JSON.stringify(newIds));
+      if (index >= newIds.length) index = 0;
+      imgContainer.setAttribute("data-image-index", index.toString());
+      renderImage();
+    });*/
+
+    navDiv.appendChild(btnFirst);
+    navDiv.appendChild(btnPrev);
+    navDiv.appendChild(btnNext);
+    navDiv.appendChild(btnLast);
+    //navDiv.appendChild(btnNew);
+    //navDiv.appendChild(btnDelete);
+
+    // Comment and Edit link
+    const commentPara = document.createElement('p');
+    commentPara.innerText = setup.comment || "";
+    commentPara.className = "border p-2 mt-3";
+
+    const editLink = document.createElement('a');
+    editLink.href = `/setup-entry?id=${setup.id}`;
+    editLink.className = "btn btn-link btn-sm";
+    editLink.innerText = "Edit Setup";
+
+    // Assemble into column
+    col.appendChild(imgContainer);
+    col.appendChild(navDiv);
+    col.appendChild(commentPara);
+    col.appendChild(editLink);
+
+    // Add column to the current row
+    currentRow.appendChild(col);
+  });
+}
+
+  // -------------------------------
+  // Initialization: Load setups for the given tag and page.
+  // -------------------------------
+  window.onload = loadSetups;
+</script>
+{% endblock %}

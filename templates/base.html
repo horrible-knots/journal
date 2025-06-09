@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}My App{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <!-- Include Bootstrap as needed -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Left Navigation Bar -->
+		<nav class="col-auto d-none d-md-block bg-light sidebar" style="position: fixed; top: 0; bottom: 0; left: 0; width: 200px; overflow-y: auto; z-index: 1000;">
+		  <div class="position-sticky pt-3 px-2">
+			<ul class="nav flex-column">
+			  <li class="nav-item"><a class="nav-link" href="/trades">Trades</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/setup-entry">Setup Entry</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/setup-search">Setup Search</a></li>
+			  <li class="nav-item"><a class="nav-link" href="/tag-manager">Tag Manager</a></li>
+			</ul>
+		  </div>
+		</nav>
+
+      <!-- Main Content -->
+		<main class="ms-0 px-md-4" style="margin-left: 160px;">
+		  {% block content %}
+		  {% endblock %}
+		</main>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	  <!-- Zoom Modal -->
+	<div id="imageZoomModal" class="modal" tabindex="-1">
+	  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+		<div class="modal-content bg-transparent border-0">
+		  <div class="modal-body d-flex justify-content-center align-items-center p-0">
+			<img id="zoomedImage" src="" class="img-fluid" style="max-height: 90vh; max-width: 100%;">
+		  </div>
+		</div>
+	  </div>
+	</div>
+
+	<script>
+	  document.addEventListener("DOMContentLoaded", function () {
+		const zoomModal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+		const zoomedImage = document.getElementById('zoomedImage');
+
+		document.querySelectorAll('.zoomable-image').forEach(img => {
+		  img.style.cursor = 'zoom-in';
+		  img.addEventListener('click', () => {
+			zoomedImage.src = img.src;
+			zoomModal.show();
+		  });
+		});
+	  });
+	</script>
+
+</body>
+</html>

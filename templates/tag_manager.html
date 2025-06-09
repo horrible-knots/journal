@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Tag Manager{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1>Tag Manager</h1>
+
+  <!-- New Tag Input -->
+  <div class="row mb-3">
+    <div class="col-8">
+      <input type="text" id="newTagName" class="form-control" placeholder="Enter new tag name" />
+    </div>
+    <div class="col-4">
+      <button id="addTagBtn" class="btn btn-primary">Add Tag</button>
+    </div>
+  </div>
+
+  <!-- Existing Tags List -->
+  <div id="tagList"></div>
+</div>
+
+<script>
+  // Function to load and display all tags in a 3-column layout
+  async function loadTags() {
+    const res = await fetch('/api/tags');
+    const tags = await res.json();
+    const tagListDiv = document.getElementById('tagList');
+    tagListDiv.innerHTML = '';
+
+    let currentRow;
+
+    tags.forEach((tag, index) => {
+      if (index % 3 === 0) {
+        currentRow = document.createElement('div');
+        currentRow.className = 'row mb-3';
+        tagListDiv.appendChild(currentRow);
+      }
+
+      const col = document.createElement('div');
+      col.className = 'col-md-4';
+
+      const tagCard = document.createElement('div');
+      tagCard.className = 'border p-2 d-flex justify-content-between align-items-center rounded bg-white shadow-sm';
+
+      tagCard.innerHTML = `
+        <span>${tag.name}</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteTag(${tag.id})">Delete</button>
+      `;
+
+      col.appendChild(tagCard);
+      currentRow.appendChild(col);
+    });
+  }
+
+  document.getElementById('addTagBtn').addEventListener('click', async () => {
+    const newTagName = document.getElementById('newTagName').value.trim();
+    if (!newTagName) return;
+
+    const res = await fetch('/api/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newTagName })
+    });
+
+    if (res.ok) {
+      document.getElementById('newTagName').value = '';
+      await loadTags();
+    } else {
+      const errorData = await res.json();
+      alert('Error: ' + (errorData.error || 'Could not add tag.'));
+    }
+  });
+
+  async function deleteTag(tagId) {
+    if (!confirm("Are you sure you want to delete this tag?")) return;
+    await fetch('/api/tags/' + tagId, { method: 'DELETE' });
+    await loadTags();
+  }
+
+  window.onload = loadTags;
+</script>
+{% endblock %}
